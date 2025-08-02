@@ -56,8 +56,9 @@ export default function Home() {
           Welcome to Generalux
         </h1>
         <p className="text-neutral-500 max-w-lg mx-auto my-2 text-sm text-center relative z-10">
-          Experience the future of user interfaces with our cutting-edge design system.
-          Built with modern technologies and beautiful animations.
+        Unleash your market potential with our AI-powered GTM strategy tool.
+
+Crafted with cutting-edge intelligence and seamless execution.
         </p>
         <div className="flex justify-center mt-8">
           <Button 
