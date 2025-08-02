@@ -6,11 +6,17 @@ const handler = NextAuth({
     LinkedInProvider({
       clientId: process.env.LINKEDIN_CLIENT_ID as string,
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET as string,
-      // Using the simplest configuration possible
+      authorization: {
+        params: {
+          scope: "openid profile email",
+        },
+      },
+      issuer: "https://www.linkedin.com/oauth",
+      jwks_endpoint: "https://www.linkedin.com/oauth/openid/jwks",
       profile(profile) {
         return {
-          id: profile.sub || profile.id,
-          name: profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim(),
+          id: profile.sub,
+          name: profile.name,
           email: profile.email,
           image: profile.picture,
         };
