@@ -63,7 +63,7 @@ export default function Profile() {
           </CardHeader>
 
           <CardContent>
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex flex-col">
               <CardTitle className="mb-4">Your LinkedIn Profile</CardTitle>
               <div className="flex items-center space-x-4 mb-6">
                 {session.user.image ? (
