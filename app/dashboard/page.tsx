@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast, Toaster } from "sonner";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -28,6 +29,7 @@ export default function Dashboard() {
     e.preventDefault();
     if (prompt.trim()) {
       console.log("Prompt submitted:", prompt);
+      toast.info("The features are coming soon");
       setPrompt("");
     }
   };
@@ -50,6 +52,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center antialiased">
+      <Toaster position="top-center" />
       {/* Top right user controls */}
       <div className="absolute top-0 right-0 p-6 flex items-center space-x-4 z-20">
         <Link href="/profile">
@@ -72,15 +75,15 @@ export default function Dashboard() {
             <span className="hidden sm:inline">{session.user.name || "Profile"}</span>
           </div>
         </Link>
-        <Button onClick={handleSignOut} variant="outline">
+        <Button onClick={handleSignOut} variant="destructive">
           Sign Out
         </Button>
       </div>
       <div className="max-w-4xl mx-auto p-8 w-full">
         <Card>
           <CardHeader>
-            <CardTitle>Welcome to Your Dashboard</CardTitle>
-            <CardDescription>Enter your prompt below</CardDescription>
+            <CardTitle>Use Generlux to create a GTM strategy</CardTitle>
+            <CardDescription>How to use? Just enter the market that you plan to build your product in. </CardDescription>
           </CardHeader>
 
           <CardContent>
