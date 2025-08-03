@@ -64,7 +64,7 @@ export default function Profile() {
 
           <CardContent>
             <div className="flex flex-col">
-              <CardTitle className="mb-4">Your LinkedIn Profile</CardTitle>
+              
               <div className="flex items-center space-x-4 mb-6">
                 {session.user.image ? (
                   <Image
@@ -91,14 +91,7 @@ export default function Profile() {
                 </div>
               </div>
               <div className="space-y-4 w-full max-w-md">
-                <Card>
-                  <CardContent className="pt-6">
-                    <CardTitle className="text-sm mb-2">User ID</CardTitle>
-                    <p className="font-mono text-sm">
-                      {session.user.id || "Not available"}
-                    </p>
-                  </CardContent>
-                </Card>
+                
                 <Card>
                   <CardContent className="pt-6">
                     <CardTitle className="text-sm mb-2">Full Name</CardTitle>
