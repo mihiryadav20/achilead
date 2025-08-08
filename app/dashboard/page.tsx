@@ -82,8 +82,8 @@ export default function Dashboard() {
       <div className="max-w-4xl mx-auto p-8 w-full">
         <Card>
           <CardHeader>
-            <CardTitle>Let's create a GTM strategy</CardTitle>
-            <CardDescription>How to use? Just enter the market that you plan to build your product in. </CardDescription>
+            <CardTitle>How to use Generalux?</CardTitle>
+            <CardDescription>Enter the market that you plan to build your product in. </CardDescription>
           </CardHeader>
 
           <CardContent>
