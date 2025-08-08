@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast, Toaster } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -144,10 +145,10 @@ export default function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                  <ReactMarkdown>
                     {response}
-                  </pre>
+                  </ReactMarkdown>
                 </div>
               )}
             </CardContent>
