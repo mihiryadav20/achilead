@@ -14,6 +14,8 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [response, setResponse] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -25,12 +27,35 @@ export default function Dashboard() {
     await signOut({ callbackUrl: "/" });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim()) {
-      console.log("Prompt submitted:", prompt);
-      toast.info("The features are coming soon");
-      setPrompt("");
+      setIsLoading(true);
+      setResponse("");
+      
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          setResponse(data.response);
+          toast.success("Response generated successfully!");
+        } else {
+          toast.error(data.error || "Failed to generate response");
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error("An error occurred while generating response");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -82,8 +107,8 @@ export default function Dashboard() {
       <div className="max-w-4xl mx-auto p-8 w-full">
         <Card>
           <CardHeader>
-            <CardTitle>How to use Generalux?</CardTitle>
-            <CardDescription>Enter the market that you plan to build your product in. </CardDescription>
+            <CardTitle>GeneralUX - AI-Powered Market Analysis</CardTitle>
+            <CardDescription>Enter your target industry or market to get insights about prospects and key personnel.</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -91,16 +116,43 @@ export default function Dashboard() {
               <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Type your prompt here..."
-                className="resize-none"
+                placeholder="e.g., 'Find prospects in the fintech industry focusing on payment solutions'"
+                className="resize-none min-h-[100px]"
+                disabled={isLoading}
               />
               <CardFooter className="px-0 pt-4">
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={isLoading || !prompt.trim()}>
+                  {isLoading ? "Generating..." : "Generate Response"}
+                </Button>
               </CardFooter>
             </form>
           </CardContent>
-
         </Card>
+
+        {/* Response Card */}
+        {(response || isLoading) && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>AI Response</CardTitle>
+              <CardDescription>
+                {isLoading ? "Generating response..." : "Here's what our AI found:"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                    {response}
+                  </pre>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
