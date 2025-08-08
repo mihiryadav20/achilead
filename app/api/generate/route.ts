@@ -11,16 +11,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer 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',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:3000', // Your site URL
-        'X-Title': 'GeneralUX', // Your site name
       },
       body: JSON.stringify({
-        model: 'x-ai/grok-4', // Using Grok-4
+        model: 'llama3-70b-8192', // Using Llama3 70b on Groq
         messages: [
           {
             role: 'system',
@@ -31,7 +29,7 @@ export async function POST(request: NextRequest) {
             content: prompt
           }
         ],
-        max_tokens: 1000,
+        max_tokens: 4096,
         temperature: 0.7
       })
     });
