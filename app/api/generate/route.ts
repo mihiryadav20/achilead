@@ -11,14 +11,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // Using Azure AI Foundry for the agent
+    const response = await fetch('https://yadavmihirsanjay-8302-resource.services.ai.azure.com/models/chat/completions?api-version=2024-05-01-preview', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'api-key': `${process.env.AZURE_AI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama3-70b-8192', // Using Llama3 70b on Groq
+        model: 'grok-3-2', // Using Grok-3-2 model from Azure AI Foundry
         messages: [
           {
             role: 'system',
@@ -36,9 +37,9 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenRouter API error:', errorData);
+      console.error('Azure AI API error:', errorData);
       return NextResponse.json(
-        { error: 'Failed to generate response from OpenRouter' },
+        { error: 'Failed to generate response from Azure AI' },
         { status: response.status }
       );
     }
