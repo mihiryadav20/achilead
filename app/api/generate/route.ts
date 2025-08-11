@@ -1,36 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Function to validate if prompt is related to prospect finding
-function isProspectRelatedPrompt(prompt: string): boolean {
-  const prospectKeywords = [
-    'industry', 'market', 'company', 'companies', 'business', 'prospects', 'leads',
-    'clients', 'customers', 'target', 'sector', 'vertical', 'niche', 'b2b',
-    'enterprise', 'startup', 'corporation', 'firm', 'organization', 'linkedin',
-    'sales', 'outreach', 'contact', 'decision maker', 'executive', 'ceo', 'cto',
-    'founder', 'director', 'manager', 'head of', 'vp', 'vice president'
-  ];
-  
-  const lowerPrompt = prompt.toLowerCase();
-  
-  // Check if prompt contains at least one prospect-related keyword
-  const hasProspectKeywords = prospectKeywords.some(keyword => 
-    lowerPrompt.includes(keyword)
-  );
-  
-  // Check for common non-prospect queries to filter out
-  const nonProspectKeywords = [
-    'recipe', 'cooking', 'weather', 'joke', 'story', 'poem', 'math problem',
-    'homework', 'personal advice', 'relationship', 'health', 'medical',
-    'travel', 'entertainment', 'movie', 'music', 'sports', 'game'
-  ];
-  
-  const hasNonProspectKeywords = nonProspectKeywords.some(keyword => 
-    lowerPrompt.includes(keyword)
-  );
-  
-  return hasProspectKeywords && !hasNonProspectKeywords;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { prompt } = await request.json();
@@ -38,16 +7,6 @@ export async function POST(request: NextRequest) {
     if (!prompt) {
       return NextResponse.json(
         { error: 'Prompt is required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate if prompt is related to prospect finding
-    if (!isProspectRelatedPrompt(prompt)) {
-      return NextResponse.json(
-        { 
-          error: 'Please make sure that the prompt is specific to what our product is designed for: finding prospects and companies in specific industries or markets. Try asking about target industries, company types, or prospect research instead.' 
-        },
         { status: 400 }
       );
     }
