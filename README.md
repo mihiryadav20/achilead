@@ -1,37 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GeneralUX
 
-## Getting Started
+**AI-Powered Prospect Discovery Platform**
 
-First, run the development server:
+GeneralUX helps businesses find and connect with potential clients in their target markets through intelligent prospect research and contact discovery.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## What GeneralUX Does
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🎯 Market Analysis & Prospect Discovery
+- Enter your target industry or market segment
+- Get instant market insights including growth trends and current market stage
+- Discover relevant prospect companies that match your criteria
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🏢 Company Intelligence
+For each prospect company, GeneralUX provides:
+- Company name and classification (SME or Large Enterprise)
+- Geographic location
+- Website and domain information
+- Business focus and market positioning
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 📧 Decision Maker Contact Discovery
+- Click "Find LinkedIn Profiles" for any company
+- Instantly discover email addresses of key decision makers
+- Access contacts for executives, founders, directors, and department heads
+- Get confidence scores for each contact to prioritize outreach
 
-## Learn More
+### 🚀 Streamlined Workflow
+1. **Research**: Enter your target market or industry
+2. **Discover**: Review curated list of prospect companies
+3. **Connect**: Find decision maker contacts with one click
+4. **Engage**: Reach out to qualified prospects with confidence
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*GeneralUX transforms hours of manual prospect research into minutes of intelligent discovery, helping you focus on what matters most - building relationships and closing deals.*
 # generalux
