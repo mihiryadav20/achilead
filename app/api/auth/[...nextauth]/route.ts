@@ -1,10 +1,10 @@
 import NextAuth from "next-auth";
 import LinkedInProvider from "next-auth/providers/linkedin";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
+// import { PrismaAdapter } from "@next-auth/prisma-adapter";
+// import { prisma } from "@/lib/prisma";
 
 const handler = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  // adapter: PrismaAdapter(prisma), // Temporarily disabled for testing
   providers: [
     LinkedInProvider({
       clientId: process.env.LINKEDIN_CLIENT_ID as string,
@@ -34,65 +34,33 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // This callback is called whenever a user signs in
-      // The user will be automatically saved to the database via PrismaAdapter
-      if (account?.provider === "linkedin" && profile) {
-        try {
-          // Update user with additional LinkedIn profile data
-          await prisma.user.upsert({
-            where: { email: user.email! },
-            update: {
-              name: user.name,
-              image: user.image,
-              linkedinId: profile.sub,
-              headline: (profile as any).headline,
-              location: (profile as any).location?.name,
-              industry: (profile as any).industry,
-              summary: (profile as any).summary,
-              publicProfileUrl: (profile as any).publicProfileUrl,
-            },
-            create: {
-              email: user.email!,
-              name: user.name,
-              image: user.image,
-              linkedinId: profile.sub,
-              headline: (profile as any).headline,
-              location: (profile as any).location?.name,
-              industry: (profile as any).industry,
-              summary: (profile as any).summary,
-              publicProfileUrl: (profile as any).publicProfileUrl,
-            },
-          });
-        } catch (error) {
-          console.error("Error saving user profile:", error);
-          // Still allow sign in even if profile update fails
+    async jwt({ token, account, profile }) {
+      // Persist the OAuth access_token and user info to the token right after signin
+      if (account) {
+        token.accessToken = account.access_token;
+        token.id = profile?.sub;
+        // Store LinkedIn profile data in token for now
+        if (account.provider === "linkedin" && profile) {
+          token.linkedinProfile = {
+            linkedinId: profile.sub,
+            headline: (profile as any).headline,
+            location: (profile as any).location?.name,
+            industry: (profile as any).industry,
+            summary: (profile as any).summary,
+            publicProfileUrl: (profile as any).publicProfileUrl,
+          };
         }
       }
-      return true;
+      return token;
     },
-    async session({ session, user }) {
+    async session({ session, token }) {
       // Send properties to the client
+      session.accessToken = token.accessToken as string;
       if (session.user) {
-        session.user.id = user.id;
-        // Fetch additional user data from database
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            image: true,
-            linkedinId: true,
-            headline: true,
-            location: true,
-            industry: true,
-            summary: true,
-            publicProfileUrl: true,
-          },
-        });
-        if (dbUser) {
-          session.user = { ...session.user, ...dbUser };
+        session.user.id = token.id as string;
+        // Add LinkedIn profile data to session
+        if (token.linkedinProfile) {
+          session.user = { ...session.user, ...token.linkedinProfile };
         }
       }
       return session;
