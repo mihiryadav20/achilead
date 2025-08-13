@@ -20,6 +20,42 @@ interface Company {
   location?: string;
 }
 
+// Function to filter out the prospect companies section from the AI response
+function filterProspectSection(text: string): string {
+  const lines = text.split(/\n/);
+  const filteredLines: string[] = [];
+  let inProspectSection = false;
+  
+  for (const line of lines) {
+    // Check if we're entering the prospect companies section
+    if (line.match(/prospect companies|companies|prospects/i) && line.match(/^#+\s|^\*\*|^##/)) {
+      inProspectSection = true;
+      continue;
+    }
+    
+    // Skip lines that are part of the prospect section
+    if (inProspectSection) {
+      // Check if we've reached a new section (starts with # or **)
+      if (line.match(/^#+\s|^\*\*/) && !line.match(/prospect companies|companies|prospects/i)) {
+        inProspectSection = false;
+        filteredLines.push(line);
+      }
+      // Skip numbered/bulleted items in prospect section
+      else if (line.match(/^\s*(?:[0-9]+\.|[-*•])\s*(.+)$/)) {
+        continue;
+      }
+      // Skip empty lines in prospect section
+      else if (!line.trim()) {
+        continue;
+      }
+    } else {
+      filteredLines.push(line);
+    }
+  }
+  
+  return filteredLines.join('\n');
+}
+
 // Function to parse companies from the AI response
 function parseCompaniesFromResponse(text: string): Company[] {
   const companies: Company[] = [];
@@ -240,27 +276,51 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                  <ReactMarkdown>
-                    {response}
-                  </ReactMarkdown>
+                  {parsedCompanies.length === 0 && (
+                    <ReactMarkdown>
+                      {response}
+                    </ReactMarkdown>
+                  )}
                   
                   {parsedCompanies.length > 0 && (
                     <div className="mt-6 border-t pt-4">
                       <h3 className="text-lg font-medium mb-3">Prospect Companies</h3>
-                      <div className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
                         {parsedCompanies.map((company, index) => (
-                          <div key={index} className="border rounded-md p-3">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="font-medium">{company.name}</h4>
-                                <p className="text-sm text-muted-foreground">{company.classification} • {company.location}</p>
+                          <div key={index} className="border rounded-md p-4 bg-card">
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-lg">{company.name.replace(/\*+/g, "")}</h4>
+                              <div className="text-sm space-y-1">
+                                {company.classification && (
+                                  <div>
+                                    <span className="text-muted-foreground mr-1">Classification:</span>
+                                    <span>{company.classification}</span>
+                                  </div>
+                                )}
+                                {company.location && (
+                                  <div>
+                                    <span className="text-muted-foreground mr-1">Location:</span>
+                                    <span>{company.location}</span>
+                                  </div>
+                                )}
                                 {company.website && (
-                                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">
-                                    {company.domain || company.website}
-                                  </a>
+                                  <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-muted-foreground">Website:</span>
+                                      <a
+                                        href={company.website}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-500 hover:underline break-all"
+                                      >
+                                        {company.website}
+                                      </a>
+                                      <EmailFinder company={company} />
+                                    </div>
+                                    <div className="mt-2 border-t" />
+                                  </div>
                                 )}
                               </div>
-                              <EmailFinder company={company} />
                             </div>
                           </div>
                         ))}
