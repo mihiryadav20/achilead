@@ -10,124 +10,79 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast, Toaster } from "sonner";
 import ReactMarkdown from "react-markdown";
-import { EmailFinder } from "@/components/ui/email-finder";
 
 interface Company {
   name: string;
+  description?: string;
   domain?: string;
   website?: string;
-  classification?: string;
-  location?: string;
-}
-
-// Function to filter out the prospect companies section from the AI response
-function filterProspectSection(text: string): string {
-  const lines = text.split(/\n/);
-  const filteredLines: string[] = [];
-  let inProspectSection = false;
-  
-  for (const line of lines) {
-    // Check if we're entering the prospect companies section
-    if (line.match(/prospect companies|companies|prospects/i) && line.match(/^#+\s|^\*\*|^##/)) {
-      inProspectSection = true;
-      continue;
-    }
-    
-    // Skip lines that are part of the prospect section
-    if (inProspectSection) {
-      // Check if we've reached a new section (starts with # or **)
-      if (line.match(/^#+\s|^\*\*/) && !line.match(/prospect companies|companies|prospects/i)) {
-        inProspectSection = false;
-        filteredLines.push(line);
-      }
-      // Skip numbered/bulleted items in prospect section
-      else if (line.match(/^\s*(?:[0-9]+\.|[-*•])\s*(.+)$/)) {
-        continue;
-      }
-      // Skip empty lines in prospect section
-      else if (!line.trim()) {
-        continue;
-      }
-    } else {
-      filteredLines.push(line);
-    }
-  }
-  
-  return filteredLines.join('\n');
 }
 
 // Function to parse companies from the AI response
 function parseCompaniesFromResponse(text: string): Company[] {
   const companies: Company[] = [];
-  
-  // Look for patterns like:
-  // 1. Company Name - SME - Location - website.com
-  // Company Name (SME) - Location - website.com
-  // etc.
-  
-  // Split by numbered list items or bullet points
   const lines = text.split(/\n/);
-  
-  let inCompanySection = false;
-  
-  for (const line of lines) {
-    // Check if we're in the company section
-    if (line.match(/prospect companies|companies|prospects/i)) {
-      inCompanySection = true;
-      continue;
-    }
-    
-    // Skip if not in company section or empty line
-    if (!inCompanySection || !line.trim()) continue;
-    
-    // Check for company name pattern (numbered or bullet point)
-    const companyMatch = line.match(/^\s*(?:[0-9]+\.|[-*•])\s*(.+)$/i);
-    
-    if (companyMatch) {
-      const companyInfo = companyMatch[1].trim();
-      
-      // Extract company name
-      let name = companyInfo;
-      let classification = "";
-      let location = "";
-      let website = "";
-      let domain = "";
-      
-      // Extract classification (SME or Large Enterprise)
-      const classMatch = companyInfo.match(/(SME|Small|Medium|Large Enterprise|Enterprise)/i);
-      if (classMatch) {
-        classification = classMatch[0];
-        name = name.replace(new RegExp(`[-–—]?\\s*${classification}\\s*[-–—]?`, 'i'), '');
-      }
-      
-      // Extract location
-      const locationMatch = companyInfo.match(/[-–—]\s*([^-–—]+(?:,\s*[^-–—]+)?)\s*[-–—]/i);
-      if (locationMatch) {
-        location = locationMatch[1].trim();
-        name = name.replace(new RegExp(`[-–—]\\s*${location.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[-–—]?`, 'i'), '');
-      }
-      
-      // Extract website/domain
-      const websiteMatch = companyInfo.match(/(?:https?:\/\/)?([\w-]+(?:\.[\w-]+)+(?:\/[\w-./?%&=]*)?)/i);
-      if (websiteMatch) {
-        website = websiteMatch[0].startsWith('http') ? websiteMatch[0] : `https://${websiteMatch[0]}`;
-        domain = websiteMatch[1];
-        name = name.replace(new RegExp(`[-–—]?\\s*${websiteMatch[0]}\\s*[-–—]?`, 'i'), '');
-      }
-      
-      // Clean up name
-      name = name.replace(/[-–—]\s*$|^\s*[-–—]|\s+/g, ' ').trim();
-      
-      companies.push({
-        name,
-        classification,
-        location,
-        website,
-        domain
-      });
+
+  // Build blocks for each company using numbered or bulleted list starts
+  const blocks: { header: string; body: string[] }[] = [];
+  let current: { header: string; body: string[] } | null = null;
+  const itemStart = /^\s*(?:\d+[\.:\)]|[-*•])\s+(.*)$/;
+
+  for (const raw of lines) {
+    const line = raw.replace(/\r$/, '');
+    const m = line.match(itemStart);
+    if (m) {
+      if (current) blocks.push(current);
+      current = { header: m[1].trim(), body: [] };
+    } else if (current) {
+      current.body.push(line.trim());
     }
   }
-  
+  if (current) blocks.push(current);
+
+  for (const blk of blocks) {
+    const firstLine = blk.header.trim();
+
+    // Extract name (before a common separator if present)
+    let name = firstLine;
+    const sepMatch = firstLine.match(/\s[-–—:|]\s/);
+    if (sepMatch) {
+      const idx = firstLine.search(/\s[-–—:|]\s/);
+      if (idx > 0) name = firstLine.slice(0, idx).trim();
+    }
+    name = name.replace(/\*+/g, '').trim();
+
+    // Compose full block text for description/domain extraction
+    const full = [blk.header, ...blk.body].join('\n').trim();
+
+    // Extract domain (labeled or plain)
+    let domain = '';
+    const labeled = full.match(/(?:^|\n)\s*(?:Domain(?: name)?|Website)\s*[:\-]\s*([a-z0-9.-]+\.[a-z]{2,})(?!\S)/i);
+    if (labeled) {
+      domain = labeled[1].toLowerCase();
+    } else {
+      const anyDomain = full.match(/(?:https?:\/\/)?([a-z0-9-]+(?:\.[a-z0-9-]+)+)(?:\/\S*)?/i);
+      if (anyDomain) domain = anyDomain[1].toLowerCase();
+    }
+    const website = domain ? `https://${domain}` : '';
+
+    // Build description: remove labeled domain lines and the name prefix from header
+    let description = full
+      .replace(/(?:^|\n)\s*(?:Domain(?: name)?|Website)\s*[:\-]\s*[^\n]+/gi, '')
+      .trim();
+
+    // If header contains separator with intro, prefer that plus body
+    const headerIntro = blk.header.match(/\s[-–—:]\s(.+)$/);
+    if (headerIntro) {
+      description = [headerIntro[1], blk.body.join(' ')].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    } else {
+      // Otherwise use body as description
+      description = blk.body.join(' ').replace(/\s+/g, ' ').trim();
+    }
+
+    companies.push({ name, description, domain, website });
+  }
+
   return companies;
 }
 
@@ -290,34 +245,23 @@ export default function Dashboard() {
                           <div key={index} className="border rounded-md p-4 bg-card">
                             <div className="space-y-2">
                               <h4 className="font-medium text-lg">{company.name.replace(/\*+/g, "")}</h4>
-                              <div className="text-sm space-y-1">
-                                {company.classification && (
+                              <div className="text-sm space-y-2">
+                                {company.description && (
                                   <div>
-                                    <span className="text-muted-foreground mr-1">Classification:</span>
-                                    <span>{company.classification}</span>
-                                  </div>
-                                )}
-                                {company.location && (
-                                  <div>
-                                    <span className="text-muted-foreground mr-1">Location:</span>
-                                    <span>{company.location}</span>
+                                    {company.description}
                                   </div>
                                 )}
                                 {company.website && (
-                                  <div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-muted-foreground">Website:</span>
-                                      <a
-                                        href={company.website}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 hover:underline break-all"
-                                      >
-                                        {company.website}
-                                      </a>
-                                      <EmailFinder company={company} />
-                                    </div>
-                                    <div className="mt-2 border-t" />
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-muted-foreground">Website:</span>
+                                    <a
+                                      href={company.website}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline break-all"
+                                    >
+                                      {company.website.replace(/^https?:\/\//, "")}
+                                    </a>
                                   </div>
                                 )}
                               </div>
