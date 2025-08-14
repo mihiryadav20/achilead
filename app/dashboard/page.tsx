@@ -10,77 +10,72 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast, Toaster } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { CheckCircle } from "lucide-react";
+import { EmailFinder } from "@/components/ui/email-finder";
 
 interface Company {
   name: string;
-  description?: string;
+  description: string; // This will hold the full details block for rendering
   domain?: string;
-  website?: string;
+}
+
+// Function to filter out the prospect companies section from the AI response
+function filterProspectSection(text: string): string {
+  const lines = text.split(/\n/);
+  const filteredLines: string[] = [];
+  let inProspectSection = false;
+  
+  for (const line of lines) {
+    // Check if we're entering the prospect companies section
+    if (line.match(/prospect companies|companies|prospects/i) && line.match(/^#+\s|^\*\*|^##/)) {
+      inProspectSection = true;
+      continue;
+    }
+    
+    // Skip lines that are part of the prospect section
+    if (inProspectSection) {
+      // Check if we've reached a new section (starts with # or **)
+      if (line.match(/^#+\s|^\*\*/) && !line.match(/prospect companies|companies|prospects/i)) {
+        inProspectSection = false;
+        filteredLines.push(line);
+      }
+      // Skip numbered/bulleted items in prospect section
+      else if (line.match(/^\s*(?:[0-9]+\.|[-*•])\s*(.+)$/)) {
+        continue;
+      }
+      // Skip empty lines in prospect section
+      else if (!line.trim()) {
+        continue;
+      }
+    } else {
+      filteredLines.push(line);
+    }
+  }
+  
+  return filteredLines.join('\n');
 }
 
 // Function to parse companies from the AI response
 function parseCompaniesFromResponse(text: string): Company[] {
   const companies: Company[] = [];
-  const lines = text.split(/\n/);
+  // Split the response into blocks for each company, assuming they start with a number and a bolded name.
+  const companyBlocks = text.split(/\n\s*(?:[0-9]+\.|[-*•])\s*\*\*/).slice(1);
 
-  // Build blocks for each company using numbered or bulleted list starts
-  const blocks: { header: string; body: string[] }[] = [];
-  let current: { header: string; body: string[] } | null = null;
-  const itemStart = /^\s*(?:\d+[\.:\)]|[-*•])\s+(.*)$/;
+  for (const block of companyBlocks) {
+    const lines = block.split('\n').map(line => line.trim());
+    
+    // First line is the company name (without the initial asterisks)
+    const name = lines[0].replace(/\*\*$/, '').trim();
+    if (!name) continue;
 
-  for (const raw of lines) {
-    const line = raw.replace(/\r$/, '');
-    const m = line.match(itemStart);
-    if (m) {
-      if (current) blocks.push(current);
-      current = { header: m[1].trim(), body: [] };
-    } else if (current) {
-      current.body.push(line.trim());
-    }
-  }
-  if (current) blocks.push(current);
+    // The rest of the lines are the description
+    const description = lines.slice(1).join('\n');
+    
+    // Extract domain from the description for the EmailFinder component
+    const domainMatch = description.match(/(?:Domain Name|Website):\s*([\w.-]+)/i);
+    const domain = domainMatch ? domainMatch[1] : undefined;
 
-  for (const blk of blocks) {
-    const firstLine = blk.header.trim();
-
-    // Extract name (before a common separator if present)
-    let name = firstLine;
-    const sepMatch = firstLine.match(/\s[-–—:|]\s/);
-    if (sepMatch) {
-      const idx = firstLine.search(/\s[-–—:|]\s/);
-      if (idx > 0) name = firstLine.slice(0, idx).trim();
-    }
-    name = name.replace(/\*+/g, '').trim();
-
-    // Compose full block text for description/domain extraction
-    const full = [blk.header, ...blk.body].join('\n').trim();
-
-    // Extract domain (labeled or plain)
-    let domain = '';
-    const labeled = full.match(/(?:^|\n)\s*(?:Domain(?: name)?|Website)\s*[:\-]\s*([a-z0-9.-]+\.[a-z]{2,})(?!\S)/i);
-    if (labeled) {
-      domain = labeled[1].toLowerCase();
-    } else {
-      const anyDomain = full.match(/(?:https?:\/\/)?([a-z0-9-]+(?:\.[a-z0-9-]+)+)(?:\/\S*)?/i);
-      if (anyDomain) domain = anyDomain[1].toLowerCase();
-    }
-    const website = domain ? `https://${domain}` : '';
-
-    // Build description: remove labeled domain lines and the name prefix from header
-    let description = full
-      .replace(/(?:^|\n)\s*(?:Domain(?: name)?|Website)\s*[:\-]\s*[^\n]+/gi, '')
-      .trim();
-
-    // If header contains separator with intro, prefer that plus body
-    const headerIntro = blk.header.match(/\s[-–—:]\s(.+)$/);
-    if (headerIntro) {
-      description = [headerIntro[1], blk.body.join(' ')].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
-    } else {
-      // Otherwise use body as description
-      description = blk.body.join(' ').replace(/\s+/g, ' ').trim();
-    }
-
-    companies.push({ name, description, domain, website });
+    companies.push({ name, description, domain });
   }
 
   return companies;
@@ -123,7 +118,9 @@ export default function Dashboard() {
 
         if (data.success) {
           setResponse(data.response);
-          toast.success("Response generated successfully!");
+          toast.success("Response generated successfully!", {
+            icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+          });
           
           // Parse companies from the response
           try {
@@ -243,28 +240,20 @@ export default function Dashboard() {
                       <div className="grid grid-cols-1 gap-4">
                         {parsedCompanies.map((company, index) => (
                           <div key={index} className="border rounded-md p-4 bg-card">
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-lg">{company.name.replace(/\*+/g, "")}</h4>
-                              <div className="text-sm space-y-2">
-                                {company.description && (
-                                  <div>
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-lg">{company.name}</h4>
+                              {company.description && (
+                                <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                  <ReactMarkdown>
                                     {company.description}
-                                  </div>
-                                )}
-                                {company.website && (
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-muted-foreground">Website:</span>
-                                    <a
-                                      href={company.website}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-500 hover:underline break-all"
-                                    >
-                                      {company.website.replace(/^https?:\/\//, "")}
-                                    </a>
-                                  </div>
-                                )}
-                              </div>
+                                  </ReactMarkdown>
+                                </div>
+                              )}
+                              {company.domain && (
+                                <div className="flex items-center gap-2 flex-wrap mt-2 pt-2 border-t">
+                                  <EmailFinder company={company} />
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}

@@ -83,7 +83,7 @@ export function EmailFinder({ company }: EmailFinderProps) {
           ) : (
             <Mail className="h-3 w-3" />
           )}
-          Find LinkedIn Profiles
+          Find business emails
         </Button>
       ) : (
         <div className="mt-2 space-y-2 text-sm">

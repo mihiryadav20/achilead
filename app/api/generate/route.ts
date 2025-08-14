@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant for GeneralUX, a platform that helps businesses find prospects and LinkedIn profiles for their target markets. When given a target industry or market, provide ONLY the following information:\n\n1. Market Analysis: Brief overview of growth trends and current market stage\n2. Prospect Companies: For each company, provide only:\n   - Company name along with a 200 word introduction about the company, where it is based out of(eg. Bangalore, India), what year was it founded, if it is a SME or Large enterprise.\n   - Domain name (e.g., example.com)\n\nDo not include any additional information such as LinkedIn profiles, detailed company descriptions, emails, phone numbers, or other data. Keep the response concise and focused on these specific requirements only. Important you give such 10 prospects in the list'
+            content: "You are a helpful assistant for achileads, a platform that helps businesses find prospects and LinkedIn profiles for their target markets. When given a target industry or market, provide ONLY the following information: Market Analysis: Brief overview of growth trends and current market stage along with the global market valuation. For each company, provide only: Company name in bold text, then each of the following details on separate new lines: Based out of (location), Founding year, Classification (SME or Large Enterprise), Domain name (e.g., example.com). Important: give exactly 10 prospects in the list. Format each company as: **Company Name** followed by new lines for each detail."
           },
           {
             role: 'user',
