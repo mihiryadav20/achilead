@@ -12,14 +12,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Using Azure AI Foundry for the agent
-    const response = await fetch('https://yadavmihirsanjay-2663-resource.services.ai.azure.com/models/chat/completions?api-version=2024-05-01-preview', {
+    const response = await fetch('https://yadavmihirsanjay-8302-resource.services.ai.azure.com/models/chat/completions?api-version=2024-05-01-preview', {
       method: 'POST',
       headers: {
         'api-key': `${process.env.AZURE_AI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "Llama-4-Maverick-17B-128E-Instruct-FP8", // Using Grok-3-2 model from Azure AI Foundry
+        model: "grok-3-2", // Using Grok-3-2 model from Azure AI Foundry
         messages: [
           {
             role: 'system',

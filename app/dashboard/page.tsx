@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import Link from "next/link";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast, Toaster } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { CheckCircle } from "lucide-react";
@@ -15,7 +16,9 @@ import { EmailFinder } from "@/components/ui/email-finder";
 
 interface Company {
   name: string;
-  description: string; // This will hold the full details block for rendering
+  location: string;
+  foundingYear: string;
+  classification: string;
   domain?: string;
 }
 
@@ -62,20 +65,37 @@ function parseCompaniesFromResponse(text: string): Company[] {
   const companyBlocks = text.split(/\n\s*(?:[0-9]+\.|[-*•])\s*\*\*/).slice(1);
 
   for (const block of companyBlocks) {
-    const lines = block.split('\n').map(line => line.trim());
+    const lines = block.split('\n').map(line => line.trim()).filter(line => line);
     
     // First line is the company name (without the initial asterisks)
     const name = lines[0].replace(/\*\*$/, '').trim();
     if (!name) continue;
 
-    // The rest of the lines are the description
-    const description = lines.slice(1).join('\n');
-    
-    // Extract domain from the description for the EmailFinder component
-    const domainMatch = description.match(/(?:Domain Name|Website):\s*([\w.-]+)/i);
-    const domain = domainMatch ? domainMatch[1] : undefined;
+    // Extract individual fields from the remaining lines
+    let location = '';
+    let foundingYear = '';
+    let classification = '';
+    let domain = '';
 
-    companies.push({ name, description, domain });
+    for (const line of lines.slice(1)) {
+      if (line.match(/based out of|location/i)) {
+        location = line.replace(/^.*?:\s*/i, '').trim();
+      } else if (line.match(/founding year|founded/i)) {
+        foundingYear = line.replace(/^.*?:\s*/i, '').trim();
+      } else if (line.match(/classification|type/i)) {
+        classification = line.replace(/^.*?:\s*/i, '').trim();
+      } else if (line.match(/domain|website/i)) {
+        domain = line.replace(/^.*?:\s*/i, '').trim();
+      }
+    }
+
+    companies.push({ 
+      name, 
+      location: location || 'N/A', 
+      foundingYear: foundingYear || 'N/A', 
+      classification: classification || 'N/A', 
+      domain: domain || undefined 
+    });
   }
 
   return companies;
@@ -159,35 +179,61 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center antialiased">
+    <div className="min-h-screen w-full flex flex-col antialiased">
       <Toaster position="top-center" />
-      {/* Top right user controls */}
-      <div className="absolute top-0 right-0 p-6 flex items-center space-x-4 z-20">
-        <Link href="/profile">
-          <div className="flex items-center space-x-2 cursor-pointer">
-            {session.user.image ? (
-              <Image
-                src={session.user.image}
-                alt="Profile"
-                width={32}
-                height={32}
-                className="rounded-full"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center">
-                <span>
-                  {session.user.name?.charAt(0) || session.user.email?.charAt(0) || "U"}
-                </span>
+      <header className="w-full p-4 flex justify-end items-center">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost" className="flex items-center space-x-2">
+              {session.user.image ? (
+                <Image
+                  src={session.user.image}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                  <span>{session.user.name?.charAt(0) || session.user.email?.charAt(0) || "U"}</span>
+                </div>
+              )}
+              <span className="hidden sm:inline">{session.user.name || "Profile"}</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Profile</DialogTitle>
+              <DialogDescription>
+                View your profile details and sign out.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="flex items-center space-x-4">
+                {session.user.image && (
+                  <Image
+                    src={session.user.image}
+                    alt="Profile"
+                    width={64}
+                    height={64}
+                    className="rounded-full"
+                  />
+                )}
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">{session.user.name}</p>
+                  <p className="text-sm text-muted-foreground">{session.user.email}</p>
+                </div>
               </div>
-            )}
-            <span className="hidden sm:inline">{session.user.name || "Profile"}</span>
-          </div>
-        </Link>
-        <Button onClick={handleSignOut} variant="destructive">
-          Sign Out
-        </Button>
-      </div>
-      <div className="max-w-4xl mx-auto p-8 w-full">
+            </div>
+            <DialogFooter>
+              <Button onClick={handleSignOut} variant="destructive">
+                Sign Out
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </header>
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full flex-grow">
         <Card>
           <CardHeader>
             <CardTitle>GeneralUX - AI-Powered Market Analysis</CardTitle>
@@ -237,27 +283,42 @@ export default function Dashboard() {
                   {parsedCompanies.length > 0 && (
                     <div className="mt-6 border-t pt-4">
                       <h3 className="text-lg font-medium mb-3">Prospect Companies</h3>
-                      <div className="grid grid-cols-1 gap-4">
-                        {parsedCompanies.map((company, index) => (
-                          <div key={index} className="border rounded-md p-4 bg-card">
-                            <div className="space-y-3">
-                              <h4 className="font-medium text-lg">{company.name}</h4>
-                              {company.description && (
-                                <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                  <ReactMarkdown>
-                                    {company.description}
-                                  </ReactMarkdown>
-                                </div>
-                              )}
-                              {company.domain && (
-                                <div className="flex items-center gap-2 flex-wrap mt-2 pt-2 border-t">
-                                  <EmailFinder company={company} />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[50px]">#</TableHead>
+                            <TableHead>Company Name</TableHead>
+                            <TableHead className="hidden md:table-cell">Location</TableHead>
+                            <TableHead className="hidden lg:table-cell">Founded</TableHead>
+                            <TableHead className="hidden lg:table-cell">Type</TableHead>
+                            <TableHead>Website</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {parsedCompanies.map((company, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{index + 1}</TableCell>
+                              <TableCell className="font-medium">{company.name}</TableCell>
+                              <TableCell className="hidden md:table-cell">{company.location}</TableCell>
+                              <TableCell className="hidden lg:table-cell">{company.foundingYear}</TableCell>
+                              <TableCell className="hidden lg:table-cell">{company.classification}</TableCell>
+                              <TableCell>
+                                {company.domain ? (
+                                  <span className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                                    {company.domain}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">N/A</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {company.domain && <EmailFinder company={company} />}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   )}
                 </div>
@@ -265,7 +326,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </main>
     </div>
   );
 }
