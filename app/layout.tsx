@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Montserrat } from "next/font/google";
+import { Geist, Geist_Mono, Montserrat, Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -19,8 +19,14 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700"],
 });
 
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
-  title: "Generalux - Modern Design System",
+  title: "achileads",
   description: "Experience the future of user interfaces with our cutting-edge design system",
 };
 
@@ -32,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${poppins.variable} font-poppins antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

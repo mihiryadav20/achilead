@@ -75,7 +75,7 @@ export default function HomePage() {
 
       <header className="flex justify-center items-center px-8 py-6 relative z-10">
         <nav className="flex items-center">
-          <div className="text-xl font-semibold text-black font-montserrat">achileads</div>
+          <div className="text-xl font-semibold text-black font-poppins">achileads</div>
         </nav>
       </header>
 
