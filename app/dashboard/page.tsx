@@ -236,8 +236,8 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full flex-grow">
         <Card>
           <CardHeader>
-            <CardTitle>GeneralUX - AI-Powered Market Analysis</CardTitle>
-            <CardDescription>Enter your target industry or market to get insights about prospects and key personnel.</CardDescription>
+            <CardTitle>Achileads - Go-To-Market Strategy Engine</CardTitle>
+            <CardDescription>Define your business focus to generate targeted insights on potential clients and their organizational key players.</CardDescription>
           </CardHeader>
 
           <CardContent>
