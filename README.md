@@ -1,4 +1,4 @@
-# GeneralUX
+# Achileads
 
 **AI-Powered Prospect Discovery Platform**
 
